@@ -32,11 +32,14 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - name: Check configuration
+        id: cfg
         run: |
-          [ -n "$HF_TOKEN" ] || { echo "::error::Add the HF_TOKEN repository secret"; exit 1; }
-          [ -n "$HF_SPACE" ] || { echo "::error::Add the HF_SPACE repository variable (user/space-name)"; exit 1; }
-          [ -n "$SARVAM_API_KEY" ] || { echo "::error::Add the SARVAM_API_KEY repository secret"; exit 1; }
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE" ] || [ -z "$SARVAM_API_KEY" ]; then
+            echo "::warning::Skipping auto-deploy: set secrets HF_TOKEN, SARVAM_API_KEY and variable HF_SPACE to enable it"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: Create/update the Space and push the backend
+        if: steps.cfg.outputs.skip != 'true'
         run: |
           pip install -q "huggingface_hub>=0.24"
           python - <<'PY'
