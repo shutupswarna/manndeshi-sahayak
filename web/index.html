@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>माणदेशी सहायक — Manndeshi Sahayak</title>
+  <meta name="description" content="Ask about savings, loans, insurance, self-help groups and Mann Deshi Bank loan products in Marathi, Hindi or English.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Crect width=%22100%22 height=%22100%22 rx=%2224%22 fill=%22%23b4442d%22/%3E%3Ctext x=%2250%22 y=%2270%22 font-size=%2260%22 text-anchor=%22middle%22 fill=%22white%22%3E%E0%A4%AE%3C/text%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar" aria-label="Conversations">
+      <div class="sidebar-head">
+        <button class="btn primary wide" id="newChat"><span aria-hidden="true">＋</span> <span data-i18n="newChat">नवीन संवाद</span></button>
+      </div>
+      <h2 class="side-title" data-i18n="history">मागील संवाद</h2>
+      <ul class="sessions" id="sessions"></ul>
+      <div class="sidebar-foot">
+        <button class="btn ghost wide" id="openMemory"><span aria-hidden="true">🧠</span> <span data-i18n="memory">माझ्याबद्दल आठवण</span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn only-mobile" id="toggleSidebar" aria-label="Conversations">☰</button>
+        <div class="brand">
+          <span class="logo" aria-hidden="true">म</span>
+          <div>
+            <h1>माणदेशी सहायक</h1>
+            <p class="tagline" data-i18n="tagline">आर्थिक साक्षरता आणि बँक कर्ज योजनांविषयी विचारा</p>
+          </div>
+        </div>
+        <label class="lang">
+          <span class="sr-only">Language</span>
+          <select id="lang" aria-label="Language">
+            <option value="auto">Auto</option>
+            <option value="mr">मराठी</option>
+            <option value="hi">हिंदी</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+      </header>
+
+      <div class="banner" id="banner" hidden></div>
+
+      <section class="chat" id="chat" aria-live="polite">
+        <div class="empty" id="empty">
+          <h2 data-i18n="emptyTitle">नमस्कार! तुम्हाला काय जाणून घ्यायचे आहे?</h2>
+          <p data-i18n="emptyText">बचत, बजेट, कर्ज, विमा, बचत गट, डिजिटल पेमेंट आणि माण देशी बँकेच्या उद्योजिका कर्ज योजनेबद्दल प्रश्न विचारा. प्रत्येक उत्तरासोबत स्रोत दिसतील.</p>
+          <div class="chips" id="examples"></div>
+        </div>
+      </section>
+
+      <form class="composer" id="composer" autocomplete="off">
+        <button type="button" class="icon-btn mic" id="mic" aria-label="Speak" title="बोलून विचारा">🎤</button>
+        <textarea id="input" rows="1" maxlength="2000" placeholder="तुमचा प्रश्न इथे लिहा…" aria-label="Your question"></textarea>
+        <button type="submit" class="icon-btn send" id="send" aria-label="Send">➤</button>
+      </form>
+      <p class="footnote" data-i18n="footnote">उत्तरे माणदेशी प्रशिक्षण साहित्यावर आधारित आहेत. कर्जाचे अंतिम निर्णय शाखेत विचारून घ्या.</p>
+    </main>
+  </div>
+
+  <dialog id="memoryDialog" class="dialog">
+    <form method="dialog" class="dialog-body">
+      <h2 data-i18n="memoryTitle">मला तुमच्याबद्दल काय आठवते</h2>
+      <p class="muted" data-i18n="memoryHelp">संवादातून लक्षात ठेवलेल्या गोष्टी. उत्तरे अधिक उपयुक्त करण्यासाठी वापरल्या जातात. कोणतीही गोष्ट काढून टाकू शकता.</p>
+      <ul id="facts" class="facts"></ul>
+      <div class="dialog-actions">
+        <button type="button" class="btn danger" id="forgetAll" data-i18n="forgetAll">सर्व विसरा</button>
+        <button class="btn primary" value="close" data-i18n="close">बंद करा</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

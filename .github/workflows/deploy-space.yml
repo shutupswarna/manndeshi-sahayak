@@ -1,0 +1,62 @@
+name: Deploy backend to Hugging Face Space
+
+on:
+  push:
+    branches: [main]
+    paths: ["backend/**", ".github/workflows/deploy-space.yml"]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Unit tests (fakes only, no model downloads)
+        working-directory: backend
+        run: |
+          pip install -q fastapi httpx python-multipart pydantic numpy pyarrow lancedb
+          python -m unittest discover -s tests -v
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: ${{ vars.HF_SPACE }}              # e.g. your-hf-username/manndeshi-sahayak
+      SARVAM_API_KEY: ${{ secrets.SARVAM_API_KEY }}
+      ALLOWED_ORIGINS: https://${{ github.repository_owner }}.github.io
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - name: Check configuration
+        run: |
+          [ -n "$HF_TOKEN" ] || { echo "::error::Add the HF_TOKEN repository secret"; exit 1; }
+          [ -n "$HF_SPACE" ] || { echo "::error::Add the HF_SPACE repository variable (user/space-name)"; exit 1; }
+          [ -n "$SARVAM_API_KEY" ] || { echo "::error::Add the SARVAM_API_KEY repository secret"; exit 1; }
+      - name: Create/update the Space and push the backend
+        run: |
+          pip install -q "huggingface_hub>=0.24"
+          python - <<'PY'
+          import os, shutil, tempfile, pathlib
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          space = os.environ["HF_SPACE"]
+          api.create_repo(space, repo_type="space", space_sdk="docker", exist_ok=True)
+          api.add_space_secret(space, "SARVAM_API_KEY", os.environ["SARVAM_API_KEY"])
+          api.add_space_variable(space, "ALLOWED_ORIGINS", os.environ["ALLOWED_ORIGINS"])
+          src = pathlib.Path("backend")
+          with tempfile.TemporaryDirectory() as d:
+              dst = pathlib.Path(d) / "space"
+              shutil.copytree(src, dst, ignore=shutil.ignore_patterns(".env", "state", "__pycache__", "*.pyc", "tests"))
+              (dst / "README.md").write_text(
+                  "---\ntitle: Manndeshi Sahayak API\nemoji: 🌾\ncolorFrom: red\ncolorTo: green\n"
+                  "sdk: docker\napp_port: 7860\npinned: false\n---\n\n"
+                  "Backend for https://github.com/" + os.environ.get("GITHUB_REPOSITORY", "") + "\n")
+              api.upload_folder(folder_path=str(dst), repo_id=space, repo_type="space",
+                                commit_message=f"Deploy {os.environ.get('GITHUB_SHA', '')[:7]}",
+                                delete_patterns=["app/**", "data/index/**"])
+          print("deployed to https://huggingface.co/spaces/" + space)
+          PY
