@@ -94,6 +94,19 @@ def _looks_english(text: str) -> bool:
     return sum(w in _EN_WORDS for w in words) / len(words) >= 0.25
 
 
+_HI = set("hai hain kya ke ka ki kaise kitna kitne kitni mein mujhe mera meri hum aap kab kyun nahi nahin ko se liye chahiye".split())
+_MR = set("aahe ahe aahet kay kasa kashi kase kiti mala maza majha mazi tumhi aamhi kadhi nahi naahi la chi cha che sathi pahije hoil".split())
+
+
+def _romanized_lang(text: str) -> str | None:
+    """Romanized Hindi vs Marathi by function words; None if unclear."""
+    words = re.findall(r"[a-z]+", text.lower())
+    h, m = sum(w in _HI for w in words), sum(w in _MR for w in words)
+    if h == m:
+        return None
+    return "hi" if h > m else "mr"
+
+
 def _fmt_history(h: list[dict]) -> str:
     if not h:
         return "(none)"
@@ -121,7 +134,14 @@ class ChatService:
         except (SarvamError, ValueError, KeyError) as e:
             log.warning("router failed, falling back: %s", e)
             r = {}
-        lang = pref if pref in LANGS else ("en" if _looks_english(message) else r.get("language"))
+        if pref in LANGS:
+            lang = pref
+        elif _looks_english(message):
+            lang = "en"
+        elif _script_lang(message) == "en":            # Latin script but not English: romanized Hindi/Marathi
+            lang = _romanized_lang(message) or r.get("language")
+        else:
+            lang = r.get("language")
         if lang not in LANGS:
             lang = _script_lang(message)
         return {
@@ -172,7 +192,7 @@ class ChatService:
         t3 = time.perf_counter()
 
         src_out = [{"n": s.n, "filename": s.filename, "module": s.module, "page": s.page,
-                    "heading": s.heading, "preview": s.matched[:400], "language": s.language} for s in sources]
+                    "heading": s.heading, "preview": re.sub(r"^#+\s*", "", s.matched, flags=re.M)[:400], "language": s.language} for s in sources]
         self.memory.add_message(sid, "user", message, u["language"])
         self.memory.add_message(sid, "assistant", answer, u["language"], src_out, u["standalone_question"])
         added = self.memory.add_facts(user_id, u["new_facts"], self.s.max_facts)

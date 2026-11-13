@@ -159,6 +159,9 @@ class ChatFlowTests(Base):
         self.assertTrue(_looks_english("How many days does the bank take to disburse the loan?"))
         self.assertFalse(_looks_english("Self help group ke kya fayde hain?"))
         self.assertFalse(_looks_english("बचत गट म्हणजे काय?"))
+        from app.chat import _romanized_lang
+        self.assertEqual(_romanized_lang("Self help group ke kya fayde hain?"), "hi")
+        self.assertEqual(_romanized_lang("bachat gat mhanje kay aahe?"), "mr")
 
     def test_greeting_skips_search(self):
         svc, _, _ = self.service()
